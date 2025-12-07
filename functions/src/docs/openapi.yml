@@ -1,0 +1,868 @@
+openapi: 3.0.0
+info:
+  title: La Biblioteca del Club de la Semilla API
+  description: |
+    API para gestionar semillas, imágenes, usuarios, organizaciones y sugerencias.
+
+    Entornos soportados:
+    - Local (Firebase Emulator Suite)
+    - Producción (Firebase Cloud Functions)
+  version: 1.0.0
+  contact:
+    name: La Biblioteca del Club de la Semilla
+    url: https://elclubdelasemilla.org
+    email: info@elclubdelasemilla.org
+  license:
+    name: GPLv3
+    url: https://opensource.org/license/gpl-3-0
+servers:
+  # Firebase Emulator Suite (local)
+  - url: http://localhost:5001/{projectId}/{region}/api
+    description: Local - Firebase Functions emulator HTTP base URL
+    variables:
+      projectId:
+        default: la-biblioteca-91421
+        description: ID del proyecto Firebase usado en local (puede variar según .env)
+      region:
+        default: europe-west1
+        description: Región de despliegue de Cloud Functions
+  # Producción (Callable HTTPS Functions endpoint directo)
+  - url: https://{region}-{projectId}.cloudfunctions.net/api
+    description: Producción - Endpoint directo de Cloud Functions
+    variables:
+      projectId:
+        default: la-biblioteca-91421
+      region:
+        default: europe-west1
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of items
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        owner:
+          type: string
+        src:
+          type: string
+        seedId:
+          type: string
+    ImageList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Seed:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        species:
+          type: string
+        image:
+          type: string
+        description:
+          type: string
+        sentOn:
+          type: string
+          format: date-time
+        owner:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        sow:
+          type: object
+        family:
+          type: string
+        sfgOriginal:
+          type: number
+        sfgMultisow:
+          type: number
+        sfgClump:
+          type: number
+        germinationMin:
+          type: number
+        germinationMax:
+          type: number
+    SeedList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Seed'
+    Suggestion:
+      type: object
+      properties:
+        id:
+          type: string
+        seedId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        reportedBy:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+        name:
+          type: string
+          nullable: true
+        species:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        sentOn:
+          type: string
+          format: date-time
+          nullable: true
+        owner:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        sow:
+          type: object
+          nullable: true
+        family:
+          type: string
+          nullable: true
+        sfgOriginal:
+          type: number
+          nullable: true
+        sfgMultisow:
+          type: number
+          nullable: true
+        sfgClump:
+          type: number
+          nullable: true
+        germinationMin:
+          type: number
+          nullable: true
+        germinationMax:
+          type: number
+          nullable: true
+    SuggestionList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        have:
+          type: array
+          items:
+            type: string
+        want:
+          type: array
+          items:
+            type: string
+        offer:
+          type: array
+          items:
+            type: string
+paths:
+  /images:
+    get:
+      summary: List images
+      description: Returns a list of images with pagination
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - name: seedId
+          in: query
+          schema:
+            type: string
+          description: Filter images by seed ID
+      responses:
+        '200':
+          description: List of images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageList'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new image
+      description: Creates a new image
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - src
+                - seedId
+              properties:
+                id:
+                  type: string
+                src:
+                  type: string
+                seedId:
+                  type: string
+                owner:
+                  type: string
+      responses:
+        '201':
+          description: Image created successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /images/{imageId}:
+    delete:
+      summary: Delete an image
+      description: Deletes an image by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Image deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /organizations/{id}:
+    get:
+      summary: Get organization by ID
+      description: Returns an organization by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /seeds:
+    get:
+      summary: List seeds
+      description: Returns a list of all seeds
+      responses:
+        '200':
+          description: List of seeds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedList'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new seed
+      description: Creates a new seed (admin only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - name
+                - species
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                species:
+                  type: string
+                image:
+                  type: string
+                description:
+                  type: string
+                sentOn:
+                  type: string
+                  format: date-time
+                owner:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                sow:
+                  type: object
+                family:
+                  type: string
+                sfgOriginal:
+                  type: number
+                sfgMultisow:
+                  type: number
+                sfgClump:
+                  type: number
+                germinationMin:
+                  type: number
+                germinationMax:
+                  type: number
+      responses:
+        '200':
+          description: Seed created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seed'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /seeds/{id}:
+    get:
+      summary: Get seed by ID
+      description: Returns a seed by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Seed details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seed'
+        '404':
+          description: Seed not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a seed
+      description: Updates a seed by ID (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                species:
+                  type: string
+                image:
+                  type: string
+                description:
+                  type: string
+                sentOn:
+                  type: string
+                  format: date-time
+                tags:
+                  type: array
+                  items:
+                    type: string
+                sow:
+                  type: object
+                family:
+                  type: string
+                sfgOriginal:
+                  type: number
+                sfgMultisow:
+                  type: number
+                sfgClump:
+                  type: number
+                germinationMin:
+                  type: number
+                germinationMax:
+                  type: number
+      responses:
+        '204':
+          description: Seed updated successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Seed not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a seed
+      description: Deletes a seed by ID (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Seed deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Seed not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /suggestions:
+    get:
+      summary: List suggestions
+      description: Returns a list of suggestions with pagination (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, ACCEPTED, REJECTED]
+          description: Filter by status
+      responses:
+        '200':
+          description: List of suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new suggestion
+      description: Creates a new suggestion for a seed
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - seedId
+              properties:
+                id:
+                  type: string
+                seedId:
+                  type: string
+                name:
+                  type: string
+                species:
+                  type: string
+                image:
+                  type: string
+                description:
+                  type: string
+                sentOn:
+                  type: string
+                  format: date-time
+                owner:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                sow:
+                  type: object
+                family:
+                  type: string
+                sfgOriginal:
+                  type: number
+                sfgMultisow:
+                  type: number
+                sfgClump:
+                  type: number
+                germinationMin:
+                  type: number
+                germinationMax:
+                  type: number
+      responses:
+        '201':
+          description: Suggestion created successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /suggestions/{id}:
+    get:
+      summary: Get suggestion by ID
+      description: Returns a suggestion by ID (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Suggestion details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suggestion'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Suggestion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /suggestions/{id}:accept:
+    post:
+      summary: Accept a suggestion
+      description: Accepts a suggestion by ID (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Suggestion accepted successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /suggestions/{id}:reject:
+    post:
+      summary: Reject a suggestion
+      description: Rejects a suggestion by ID (admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Suggestion rejected successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      description: Returns a user by ID (requires authentication)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a user
+      description: Updates a user by ID (requires authentication)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                image:
+                  type: string
+                have:
+                  type: array
+                  items:
+                    type: string
+                want:
+                  type: array
+                  items:
+                    type: string
+                offer:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '204':
+          description: User updated successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
