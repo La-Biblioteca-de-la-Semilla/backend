@@ -13,7 +13,7 @@ export class FirestoreOrganizationRepository implements OrganizationRepository {
         return snapshot.docs.map(doc => {
             const entity: OrganizationEntity = {
                 id: doc.id,
-                ...(doc.data() as any)
+                ...doc.data()
             } as OrganizationEntity;
             return OrganizationMapper.toDomain(entity);
         });
@@ -24,7 +24,7 @@ export class FirestoreOrganizationRepository implements OrganizationRepository {
         return snapshot.docs.map(doc => {
             const entity: OrganizationEntity = {
                 id: doc.id,
-                ...(doc.data() as any)
+                ...doc.data()
             } as OrganizationEntity;
             return OrganizationMapper.toDomain(entity);
         });

@@ -6,7 +6,6 @@ import {UpdateSeedCommandHandler} from "../../../application/update/UpdateSeedCo
 import {DeleteSeedCommandHandler} from "../../../application/delete/DeleteSeedCommandHandler";
 import {CreateSeedCommand} from "../../../application/create/CreateSeedCommand";
 import {GetSeedQuery} from "../../../application/get/GetSeedQuery";
-import {ListSeedsQuery} from "../../../application/list/ListSeedsQuery";
 import {UpdateSeedCommand} from "../../../application/update/UpdateSeedCommand";
 import {DeleteSeedCommand} from "../../../application/delete/DeleteSeedCommand";
 import {SeedAPIResponse} from "./SeedAPIResponse";
@@ -62,8 +61,9 @@ export class SeedController {
                 result.germinationMin,
                 result.germinationMax
             ));
-        } catch (error: any) {
-            res.status(400).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(400).json({error: message});
         }
     }
 
@@ -95,16 +95,16 @@ export class SeedController {
                 result.germinationMin,
                 result.germinationMax
             ));
-        } catch (error: any) {
-            res.status(500).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({error: message});
         }
     }
 
 
     async listSeeds(_req: Request, res: Response): Promise<void> {
         try {
-            const query = new ListSeedsQuery();
-            const result = await this.listSeedsQueryHandler.handle(query);
+            const result = await this.listSeedsQueryHandler.handle();
             res.json(new ListSeedAPIResponse(result.seeds.map(seed => new SeedAPIResponse(
                 seed.id,
                 seed.name,
@@ -122,8 +122,9 @@ export class SeedController {
                 seed.germinationMin,
                 seed.germinationMax
             ))));
-        } catch (error: any) {
-            res.status(500).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({error: message});
         }
     }
 
@@ -165,11 +166,12 @@ export class SeedController {
                 response.germinationMin,
                 response.germinationMax
             ));
-        } catch (error: any) {
-            if (error.message.includes("not found")) {
-                res.status(404).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            if (message.includes("not found")) {
+                res.status(404).json({error: message});
             } else {
-                res.status(400).json({error: error.message});
+                res.status(400).json({error: message});
             }
         }
     }
@@ -181,11 +183,12 @@ export class SeedController {
             await this.deleteSeedCommandHandler.handle(command);
 
             res.status(204).send(); // No content
-        } catch (error: any) {
-            if (error.message.includes("not found")) {
-                res.status(404).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            if (message.includes("not found")) {
+                res.status(404).json({error: message});
             } else {
-                res.status(500).json({error: error.message});
+                res.status(500).json({error: message});
             }
         }
     }

@@ -58,29 +58,3 @@ export const authOnDelete = functions.region(LOCATION)
 
         console.log(`User ${user.uid} and 'private' subcollection deleted`);
     });
-
-// MESSAGES
-export const onCreateMessage = functions.region(LOCATION)
-    .firestore.document("chats/{chatId}/messages/{messageId}")
-    .onCreate(async (snap, context) => {
-        const chatId = context.params.chatId;
-        const chat = await firestore.collection("chats").doc(chatId).get();
-        if (!chat.exists) {
-            logger.warn("El chat " + chatId + " no existe");
-            return;
-        }
-
-        const messageData = snap.data()
-        const chatData = chat.data()
-
-        if (!chatData) {
-            logger.warn("El chat " + chatId + " no tiene datos");
-            return;
-        }
-
-        await chat.ref.update({
-            lastMessage: snap.data(),
-            totalMessages: chatData.totalMessages ? chatData.totalMessages + 1 : 1,
-            unreadBy: chatData.participants.filter((p: string) => p !== messageData.from)
-        })
-    })

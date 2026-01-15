@@ -6,7 +6,7 @@ interface CacheItem<T> {
 }
 
 export class InMemoryCacheService implements CacheService {
-    private cache: Map<string, CacheItem<any>> = new Map();
+    private cache: Map<string, CacheItem<unknown>> = new Map();
     private readonly DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
     get<T>(key: string): T | null {
@@ -17,7 +17,7 @@ export class InMemoryCacheService implements CacheService {
             return null;
         }
 
-        return item.value;
+        return item.value as T;
     }
 
     set<T>(key: string, value: T, ttl: number = this.DEFAULT_TTL): void {

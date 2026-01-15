@@ -19,6 +19,7 @@ module.exports = {
     ignorePatterns: [
         "/lib/**/*", // Ignore built files.
         "/generated/**/*", // Ignore generated files.
+        "scripts/seed-firestore.js",
     ],
     plugins: [
         "@typescript-eslint",

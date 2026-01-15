@@ -9,7 +9,7 @@ import {FirebaseCloudStorageService} from "../../shared/infrastructure/storage/F
 import { EnvConfigService } from "../../shared/config/EnvConfigService";
 
 const config = new EnvConfigService();
-const publicURL = config.getRequired("FIREBASE_STORAGE_BASE_URL");
+const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
 
 // Repositories
 const imageRepository = new FirestoreImageRepository();

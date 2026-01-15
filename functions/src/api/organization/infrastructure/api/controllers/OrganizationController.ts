@@ -1,6 +1,5 @@
 import {Request, Response} from "express";
 import { ListOrganizationQueryHandler } from "../../../application/list-organization/ListOrganizationQueryHandler";
-import { ListOrganizationQuery } from "../../../application/list-organization/ListOrganizationQuery";
 import {OrganizationAPIResponse} from "./OrganizationAPIResponse";
 import {ListOrganizationAPIResponse} from "./ListOrganizationAPIResponse";
 
@@ -11,8 +10,7 @@ export class OrganizationController {
 
     async listOrganizations(_req: Request, res: Response) {
         try {
-            const query = new ListOrganizationQuery();
-            const result = await this.listOrganizationQueryHandler.handle(query);
+            const result = await this.listOrganizationQueryHandler.handle();
             res.json(new ListOrganizationAPIResponse(result.organizations.map(org => new OrganizationAPIResponse(
                 org.id,
                 org.name,
@@ -20,8 +18,9 @@ export class OrganizationController {
                 org.url,
                 org.owner
             ))));
-        } catch (error: any) {
-            res.status(400).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(400).json({error: message});
         }
     }
 }

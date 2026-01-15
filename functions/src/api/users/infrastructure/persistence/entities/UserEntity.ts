@@ -12,7 +12,10 @@ export interface UserEntity {
 
 export class UserEntity {
     static fromFirestore(doc: admin.firestore.DocumentSnapshot): UserEntity {
-        const data = doc.data() as any;
+        const data = doc.data();
+        if (!data) {
+            throw new Error(`Document with ID ${doc.id} has no data`);
+        }
         return {
             id: doc.id,
             name: data.name,

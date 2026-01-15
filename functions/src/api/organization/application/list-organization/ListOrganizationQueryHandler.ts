@@ -6,7 +6,7 @@ import type { OrganizationRepository } from "../../domain/OrganizationRepository
 export class ListOrganizationQueryHandler implements QueryHandler<ListOrganizationQuery, ListOrganizationResult> {
     constructor(private readonly repository: OrganizationRepository) {}
 
-    async handle(_query: ListOrganizationQuery): Promise<ListOrganizationResult> {
+    async handle(): Promise<ListOrganizationResult> {
         const organizations = await this.repository.findAll();
 
         const results = organizations.map(org => new OrganizationResult(

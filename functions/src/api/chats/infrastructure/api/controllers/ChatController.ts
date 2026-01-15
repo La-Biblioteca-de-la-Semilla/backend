@@ -36,8 +36,8 @@ export class ChatController {
                 result.totalMessages,
                 result.unreadBy
             ));
-        } catch (error: any) {
-            res.status(400).json({error: error.message});
+        } catch (reason: unknown) {
+            res.status(400).json({error: reason});
         }
     }
 
@@ -62,8 +62,9 @@ export class ChatController {
             ));
 
             res.json(new ListChatAPIResponse(chatResponses));
-        } catch (error: any) {
-            res.status(500).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({error: message});
         }
     }
 }

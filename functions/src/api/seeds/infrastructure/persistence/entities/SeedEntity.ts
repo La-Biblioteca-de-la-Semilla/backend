@@ -19,7 +19,10 @@ export class SeedEntity {
     }
 
     static fromFirestore(snapshot: FirebaseFirestore.DocumentSnapshot): SeedEntity {
-        const data = snapshot.data() as any;
+        const data = snapshot.data();
+        if (!data) {
+            throw new Error(`Document with ID ${snapshot.id} has no data`);
+        }
 
         return new SeedEntity(
             snapshot.id || "",
@@ -40,7 +43,7 @@ export class SeedEntity {
         );
     }
 
-    toFirestore(): Record<string, any> {
+    toFirestore(): Record<string, unknown> {
         return {
             name: this.name,
             species: this.species,

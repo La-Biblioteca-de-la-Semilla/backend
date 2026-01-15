@@ -33,8 +33,8 @@ export class ImageController {
 
             const result = await this.createImageCommandHandler.handle(command);
             res.status(201).send(new ImageAPIResponse(result.id, result.createdAt, result.createdBy, result.src, result.seedId));
-        } catch (error: any) {
-            res.status(400).json({ error: error.message });
+        } catch (reason: unknown) {
+            res.status(400).json({ error: reason });
         }
     }
 
@@ -58,8 +58,9 @@ export class ImageController {
                 result.images.map(image => new ImageAPIResponse(image.id, image.createdAt, image.createdBy, image.src, image.seedId)),
                 new Pagination(result.total, result.page, result.limit)
             ))
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({ error: message });
         }
     }
 
@@ -78,8 +79,9 @@ export class ImageController {
 
             await this.deleteImageCommandHandler.handle(command);
             res.status(204).send();
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({ error: message });
         }
     }
 }

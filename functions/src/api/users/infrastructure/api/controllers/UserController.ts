@@ -30,8 +30,9 @@ export class UserController {
                 result.want,
                 result.offer
             ));
-        } catch (error: any) {
-            res.status(500).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({error: message});
         }
     }
 
@@ -58,11 +59,12 @@ export class UserController {
                 result.want,
                 result.offer
             ));
-        } catch (error: any) {
-            if (error.message.includes("not found")) {
-                res.status(404).json({error: error.message});
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            if (message.includes("not found")) {
+                res.status(404).json({error: message});
             } else {
-                res.status(400).json({error: error.message});
+                res.status(400).json({error: message});
             }
         }
     }

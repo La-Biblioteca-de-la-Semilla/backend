@@ -17,7 +17,7 @@ import {eventBus} from "../../shared/config/SharedDependencyContainer";
 import {SuggestionAcceptedEvent} from "../../suggestions/domain/events/SuggestionAcceptedEvent";
 
 const config = new EnvConfigService();
-const publicURL = config.getRequired("FIREBASE_STORAGE_BASE_URL");
+const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
 
 
 // Repositories

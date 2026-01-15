@@ -64,8 +64,9 @@ export class MessageController {
                 result.messages.map(message => new MessageAPIResponse(message.id, message.from, message.text, message.sentAt)),
                 new Pagination(result.page, result.limit, result.total)
             ))
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.status(500).json({ error: message });
         }
     }
 }

@@ -13,7 +13,7 @@ export class ListSeedsQueryHandler implements QueryHandler<ListSeedsQuery, ListS
     ) {
     }
 
-    async handle(_query: ListSeedsQuery): Promise<ListSeedsResult> {
+    async handle(): Promise<ListSeedsResult> {
         const cachedResult = this.cacheService.get<ListSeedsResult>(SEEDS_LIST_CACHE_KEY);
         if (cachedResult) {
             return cachedResult;
