@@ -49,6 +49,11 @@ export class FirestoreImageRepository implements ImageRepository {
         return ImageMapper.toDomain(imageEntity);
     }
 
+    async countBySeedId(seedId: string): Promise<number> {
+        const snapshot = await this.db.where("seedId", "==", seedId).count().get();
+        return snapshot.data().count;
+    }
+
     async delete(id: string): Promise<void> {
         const doc = await this.db.doc(id).get();
         if (!doc.exists) {

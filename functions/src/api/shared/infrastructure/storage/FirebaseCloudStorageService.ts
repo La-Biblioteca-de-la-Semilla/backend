@@ -65,10 +65,11 @@ export class FirebaseCloudStorageService implements ImageService {
 
             // Obtener la URL pública del archivo
             let publicUrl: string;
+            const encodedFilePath = encodeURIComponent(filePath);
             if (this.publicURL.includes("127.0.0.1") || this.publicURL.includes("localhost")) {
-                publicUrl = `${this.publicURL}/${this.bucket.name}/${filePath}`;
+                publicUrl = `${this.publicURL}/${this.bucket.name}/${encodedFilePath}`;
             } else {
-                publicUrl = `https://firebasestorage.googleapis.com/v0/b/${this.bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+                publicUrl = `${this.publicURL}${this.bucket.name}/o/${encodedFilePath}?alt=media`;
             }
 
             logger.info(`Imagen subida a Firebase Storage: ${publicUrl}`);
