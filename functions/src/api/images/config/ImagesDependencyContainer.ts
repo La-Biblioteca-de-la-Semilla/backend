@@ -7,6 +7,7 @@ import {ImagesRouter} from "../infrastructure/api/ImagesRouter";
 import {FirebaseCloudStorageService} from "../../shared/infrastructure/storage/FirebaseCloudStorageService";
 
 import { EnvConfigService } from "../../shared/config/EnvConfigService";
+import {eventBus} from "../../shared/config/SharedDependencyContainer";
 
 const config = new EnvConfigService();
 const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
@@ -16,7 +17,7 @@ const imageRepository = new FirestoreImageRepository();
 const imgService = new FirebaseCloudStorageService(publicURL);
 
 // CQRS
-const createImageCommandHandler = new CreateImageCommandHandler(imageRepository, imgService);
+const createImageCommandHandler = new CreateImageCommandHandler(imageRepository, imgService, eventBus);
 const listImagesQueryHandler = new ListImagesQueryHandler(imageRepository);
 const deleteImageCommandHandler = new DeleteImageCommandHandler(imageRepository);
 

@@ -13,8 +13,12 @@ import { EnvConfigService } from "../../shared/config/EnvConfigService";
 import {
     UpdateSeedOnSuggestionAcceptedEventHandler
 } from "../application/update-on-suggestion/UpdateSeedOnSugestionAcceptedEventHandler";
+import {
+    UpdateSeedOnFirstImageCreatedEventHandler
+} from "../application/update-on-first-image/UpdateSeedOnFirstImageCreatedEventHandler";
 import {eventBus} from "../../shared/config/SharedDependencyContainer";
 import {SuggestionAcceptedEvent} from "../../suggestions/domain/events/SuggestionAcceptedEvent";
+import {FirstSeedImageCreatedEvent} from "../../images/domain/events/FirstSeedImageCreatedEvent";
 
 const config = new EnvConfigService();
 const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
@@ -37,6 +41,12 @@ const updateSeedOnSuggestionAcceptedEventHandler = new UpdateSeedOnSuggestionAcc
 eventBus.subscribe(
     SuggestionAcceptedEvent.EVENT_NAME,
     (event) => updateSeedOnSuggestionAcceptedEventHandler.handle(event)
+)
+
+const updateSeedOnFirstImageCreatedEventHandler = new UpdateSeedOnFirstImageCreatedEventHandler(updateSeedCommandHandler, seedRepository);
+eventBus.subscribe(
+    FirstSeedImageCreatedEvent.EVENT_NAME,
+    (event) => updateSeedOnFirstImageCreatedEventHandler.handle(event)
 )
 
 // Controllers
