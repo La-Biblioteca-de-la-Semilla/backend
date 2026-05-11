@@ -16,13 +16,12 @@ export class UpdateSeedCommandHandler implements CommandHandler<UpdateSeedComman
 
     async handle(command: UpdateSeedCommand): Promise<UpdateSeedResult> {
         const seed = await this.repository.findById(command.id);
-
         if (!seed) {
             throw new Error(`Seed with ID ${command.id} not found`);
         }
 
-        let processedImageUrl = seed.image
-        if(command.image && command.image !== seed.image) {
+        let processedImageUrl = seed.image;
+        if (command.image && command.image !== seed.image) {
             processedImageUrl = await this.imageService.process(
                 command.image,
                 `seed-${command.id}`
@@ -46,9 +45,7 @@ export class UpdateSeedCommandHandler implements CommandHandler<UpdateSeedComman
         });
 
         const savedSeed = await this.repository.save(seed);
-
         this.cacheService.invalidate(SEEDS_LIST_CACHE_KEY);
-
         return UpdateSeedResult.fromDomain(savedSeed);
     }
 }

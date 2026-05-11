@@ -10,6 +10,9 @@ import {UpdateSeedCommand} from "../../../application/update/UpdateSeedCommand";
 import {DeleteSeedCommand} from "../../../application/delete/DeleteSeedCommand";
 import {SeedAPIResponse} from "./SeedAPIResponse";
 import {ListSeedAPIResponse} from "./ListSeedAPIResponse";
+import {AuthenticatedRequest} from "../../../../shared/infrastructure/api/middleware/authMiddleware";
+import {GetOrganizationsByOwnerQueryHandler} from "../../../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQueryHandler";
+import {GetOrganizationsByOwnerQuery} from "../../../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQuery";
 
 export class SeedController {
     constructor(
@@ -17,20 +20,33 @@ export class SeedController {
         private readonly getSeedQueryHandler: GetSeedQueryHandler,
         private readonly listSeedsQueryHandler: ListSeedsQueryHandler,
         private readonly updateSeedCommandHandler: UpdateSeedCommandHandler,
-        private readonly deleteSeedCommandHandler: DeleteSeedCommandHandler
+        private readonly deleteSeedCommandHandler: DeleteSeedCommandHandler,
+        private readonly getOrganizationsByOwnerQueryHandler: GetOrganizationsByOwnerQueryHandler
     ) {
     }
 
     async createSeed(req: Request, res: Response): Promise<void> {
         try {
-            // TODO: Comprobar que req.body.owner es una organización que pertenece al usuario autenticado
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({error: "Authentication required"});
+                return;
+            }
+
+            const orgsResult = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            if (orgsResult.organizations.length === 0) {
+                res.status(403).json({error: "No organization found for this user"});
+                return;
+            }
+
+            const organizationId = orgsResult.organizations[0].id;
 
             const command = new CreateSeedCommand(
                 req.body.id,
                 req.body.name,
                 req.body.species,
                 req.body.image,
-                req.body.owner,
+                organizationId,
                 req.body.description,
                 req.body.sentOn,
                 req.body.tags,
@@ -131,6 +147,25 @@ export class SeedController {
 
     async updateSeed(req: Request, res: Response): Promise<void> {
         try {
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({error: "Authentication required"});
+                return;
+            }
+
+            const seed = await this.getSeedQueryHandler.handle(new GetSeedQuery(req.params.id));
+            if (!seed) {
+                res.status(404).json({error: `Seed with ID ${req.params.id} not found`});
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === seed.owner);
+            if (!isOwner) {
+                res.status(403).json({error: "You don't have permission to update this seed"});
+                return;
+            }
+
             const command = new UpdateSeedCommand(
                 req.params.id,
                 req.body.name,
@@ -179,10 +214,29 @@ export class SeedController {
 
     async deleteSeed(req: Request, res: Response): Promise<void> {
         try {
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({error: "Authentication required"});
+                return;
+            }
+
+            const seed = await this.getSeedQueryHandler.handle(new GetSeedQuery(req.params.id));
+            if (!seed) {
+                res.status(404).json({error: `Seed with ID ${req.params.id} not found`});
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === seed.owner);
+            if (!isOwner) {
+                res.status(403).json({error: "You don't have permission to delete this seed"});
+                return;
+            }
+
             const command = new DeleteSeedCommand(req.params.id);
             await this.deleteSeedCommandHandler.handle(command);
 
-            res.status(204).send(); // No content
+            res.status(204).send();
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             if (message.includes("not found")) {

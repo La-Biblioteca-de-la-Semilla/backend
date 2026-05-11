@@ -12,16 +12,12 @@ export class DeleteSeedCommandHandler implements CommandHandler<DeleteSeedComman
     }
 
     async handle(command: DeleteSeedCommand): Promise<void> {
-        // Verificar si la semilla existe
         const seed = await this.repository.findById(command.id);
-
         if (!seed) {
             throw new Error(`Seed with ID ${command.id} not found`);
         }
 
-        // Eliminar la semilla
         await this.repository.delete(command.id);
-
         this.cacheService.invalidate(SEEDS_LIST_CACHE_KEY);
     }
 }

@@ -13,20 +13,17 @@ export class AcceptSuggestionCommandHandler implements CommandHandler<AcceptSugg
 
     async handle(command: AcceptSuggestionCommand): Promise<AcceptSuggestionResult> {
         const suggestion = await this.suggestionRepository.findById(command.suggestionId);
-
         if (!suggestion) {
             throw new Error(`Suggestion with ID ${command.suggestionId} not found`);
         }
 
         suggestion.accept();
-
         const savedSuggestion = await this.suggestionRepository.save(suggestion);
 
         if (!suggestion.seedId) {
             throw new Error("No se puede aceptar una sugerencia sin una semilla asociada");
         }
 
-        // Publicar evento de sugerencia aceptada
         const suggestionAcceptedEvent = new SuggestionAcceptedEvent(
             suggestion.id,
             suggestion.seedId,
@@ -44,10 +41,8 @@ export class AcceptSuggestionCommandHandler implements CommandHandler<AcceptSugg
             suggestion.germinationMin ?? undefined,
             suggestion.germinationMax ?? undefined
         );
-
         await this.eventBus.publish(suggestionAcceptedEvent);
 
         return AcceptSuggestionResult.fromDomain(savedSuggestion);
-
     }
 }

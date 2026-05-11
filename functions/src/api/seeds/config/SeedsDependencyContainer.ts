@@ -8,6 +8,8 @@ import {SeedController} from "../infrastructure/api/controllers/SeedController";
 import {SeedsRouter} from "../infrastructure/api/SeedsRouter";
 import {InMemoryCacheService} from "../../shared/infrastructure/cache/InMemoryCacheService";
 import {FirebaseCloudStorageService} from "../../shared/infrastructure/storage/FirebaseCloudStorageService";
+import {FirestoreOrganizationRepository} from "../../organization/infrastructure/persistence/FirestoreOrganizationRepository";
+import {GetOrganizationsByOwnerQueryHandler} from "../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQueryHandler";
 
 import { EnvConfigService } from "../../shared/config/EnvConfigService";
 import {
@@ -26,6 +28,8 @@ const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
 
 // Repositories
 const seedRepository = new FirestoreSeedRepository();
+const organizationRepository = new FirestoreOrganizationRepository();
+const getOrganizationsByOwnerQueryHandler = new GetOrganizationsByOwnerQueryHandler(organizationRepository);
 const cacheService = new InMemoryCacheService();
 const imgService = new FirebaseCloudStorageService(publicURL);
 
@@ -55,7 +59,8 @@ const seedController = new SeedController(
     getSeedQueryHandler,
     listSeedsQueryHandler,
     updateSeedCommandHandler,
-    deleteSeedCommandHandler
+    deleteSeedCommandHandler,
+    getOrganizationsByOwnerQueryHandler
 );
 
 // Router
