@@ -9,12 +9,14 @@ import {RejectSuggestionCommandHandler} from "../application/reject-suggestion/R
 import {
     FirestoreOrganizationRepository
 } from "../../organization/infrastructure/persistence/FirestoreOrganizationRepository";
+import {GetOrganizationsByOwnerQueryHandler} from "../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQueryHandler";
 import {FirestoreSeedRepository} from "../../seeds/infrastructure/persistence/FirestoreSeedRepository";
 import {eventBus} from "../../shared/config/SharedDependencyContainer";
 
 // Repositories
 const suggestionRepository = new FirestoreSuggestionRepository();
 const organizationRepository = new FirestoreOrganizationRepository();
+const getOrganizationsByOwnerQueryHandler = new GetOrganizationsByOwnerQueryHandler(organizationRepository);
 const seedRepository = new FirestoreSeedRepository();
 
 // CQRS
@@ -31,7 +33,8 @@ const suggestionController = new SuggestionController(
     listSuggestionsQueryHandler,
     getSuggestionQueryHandler,
     acceptSuggestionCommandHandler,
-    rejectSuggestionCommandHandler
+    rejectSuggestionCommandHandler,
+    getOrganizationsByOwnerQueryHandler
 );
 
 // Router

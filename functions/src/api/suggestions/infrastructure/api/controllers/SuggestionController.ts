@@ -13,6 +13,8 @@ import {AuthenticatedRequest} from "../../../../shared/infrastructure/api/middle
 import {SuggestionAPIResponse} from "./SuggestionAPIResponse";
 import {ListSuggestionAPIResponse} from "./ListSuggestionAPIResponse";
 import {Pagination} from "../../../../shared/infrastructure/api/Pagination";
+import {GetOrganizationsByOwnerQueryHandler} from "../../../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQueryHandler";
+import {GetOrganizationsByOwnerQuery} from "../../../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQuery";
 
 export class SuggestionController {
     constructor(
@@ -20,7 +22,8 @@ export class SuggestionController {
         private readonly listSuggestionsQueryHandler: ListSuggestionsQueryHandler,
         private readonly getSuggestionQueryHandler: GetSuggestionQueryHandler,
         private readonly acceptSuggestionCommandHandler: AcceptSuggestionCommandHandler,
-        private readonly rejectSuggestionCommandHandler: RejectSuggestionCommandHandler
+        private readonly rejectSuggestionCommandHandler: RejectSuggestionCommandHandler,
+        private readonly getOrganizationsByOwnerQueryHandler: GetOrganizationsByOwnerQueryHandler
     ) {}
 
 
@@ -89,8 +92,8 @@ export class SuggestionController {
                 return;
             }
 
-            const page = parseInt(req.query.page as string) || 1; // Por defecto página 1
-            const limit = parseInt(req.query.limit as string) || 10; // Por defecto 10 elementos por página
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
             const status = req.query.status as "PENDING" | "ACCEPTED" | "REJECTED" | undefined;
 
             if (page < 1 || limit < 1) {
@@ -141,11 +144,23 @@ export class SuggestionController {
                 return;
             }
 
-            const query = new GetSuggestionQuery(suggestionId);
-            const suggestion = await this.getSuggestionQueryHandler.handle(query);
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({ error: "Authentication required" });
+                return;
+            }
+
+            const suggestion = await this.getSuggestionQueryHandler.handle(new GetSuggestionQuery(suggestionId));
 
             if (!suggestion) {
                 res.status(404).json({ error: `Suggestion with ID ${suggestionId} not found.` });
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === suggestion.organizationId);
+            if (!isOwner) {
+                res.status(403).json({ error: "You don't have permission to view this suggestion" });
                 return;
             }
 
@@ -185,6 +200,25 @@ export class SuggestionController {
                 return;
             }
 
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({ error: "Authentication required" });
+                return;
+            }
+
+            const suggestion = await this.getSuggestionQueryHandler.handle(new GetSuggestionQuery(suggestionId));
+            if (!suggestion) {
+                res.status(404).json({ error: `Suggestion with ID ${suggestionId} not found.` });
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === suggestion.organizationId);
+            if (!isOwner) {
+                res.status(403).json({ error: "You don't have permission to accept this suggestion" });
+                return;
+            }
+
             const command = new AcceptSuggestionCommand(suggestionId);
             const result = await this.acceptSuggestionCommandHandler.handle(command);
 
@@ -221,6 +255,25 @@ export class SuggestionController {
 
             if (!suggestionId) {
                 res.status(400).json({ error: "El parámetro 'id' es requerido." });
+                return;
+            }
+
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({ error: "Authentication required" });
+                return;
+            }
+
+            const suggestion = await this.getSuggestionQueryHandler.handle(new GetSuggestionQuery(suggestionId));
+            if (!suggestion) {
+                res.status(404).json({ error: `Suggestion with ID ${suggestionId} not found.` });
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === suggestion.organizationId);
+            if (!isOwner) {
+                res.status(403).json({ error: "You don't have permission to reject this suggestion" });
                 return;
             }
 

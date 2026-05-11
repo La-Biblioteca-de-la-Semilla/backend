@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { SeedController } from "./controllers/SeedController";
-import { authenticate, authorize } from "../../../shared/infrastructure/api/middleware/authMiddleware";
+import { authenticate } from "../../../shared/infrastructure/api/middleware/authMiddleware";
 
 export class SeedsRouter {
     private readonly router: Router;
@@ -16,19 +16,16 @@ export class SeedsRouter {
         this.router.get("/", (req, res) => this.seedController.listSeeds(req, res));
         this.router.get("/:id", (req, res) => this.seedController.getSeed(req, res));
 
-        this.router.post("/", 
-            authenticate, 
-            authorize(["ADMIN"]),
+        this.router.post("/",
+            authenticate,
             (req, res) => this.seedController.createSeed(req, res)
         );
-        this.router.put("/:id", 
-            authenticate, 
-            authorize(["ADMIN"]), 
+        this.router.put("/:id",
+            authenticate,
             (req, res) => this.seedController.updateSeed(req, res)
         );
-        this.router.delete("/:id", 
-            authenticate, 
-            authorize(["ADMIN"]), 
+        this.router.delete("/:id",
+            authenticate,
             (req, res) => this.seedController.deleteSeed(req, res)
         );
     }

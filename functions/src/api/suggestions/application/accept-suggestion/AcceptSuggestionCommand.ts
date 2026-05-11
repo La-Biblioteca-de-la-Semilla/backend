@@ -1,3 +1,5 @@
 export class AcceptSuggestionCommand {
-    constructor(public readonly suggestionId: string) {}
+    constructor(
+        public readonly suggestionId: string
+    ) {}
 }
