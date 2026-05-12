@@ -56,7 +56,7 @@ export class ImageController {
 
             res.json(new ListImageAPIResponse(
                 result.images.map(image => new ImageAPIResponse(image.id, image.createdAt, image.createdBy, image.src, image.seedId)),
-                new Pagination(result.total, result.page, result.limit)
+                new Pagination(result.page, result.limit, result.total)
             ))
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
