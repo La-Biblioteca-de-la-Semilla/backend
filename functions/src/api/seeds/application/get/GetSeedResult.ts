@@ -1,3 +1,5 @@
+import {SeedStatus} from "../../domain/Seed";
+
 export class GetSeedResult {
     constructor(
         public readonly id: string,
@@ -14,6 +16,7 @@ export class GetSeedResult {
         public readonly sfgMultisow: number | null,
         public readonly sfgClump: number | null,
         public readonly germinationMin: number | null,
-        public readonly germinationMax: number | null
+        public readonly germinationMax: number | null,
+        public readonly status: SeedStatus = "published"
     ) {}
 }

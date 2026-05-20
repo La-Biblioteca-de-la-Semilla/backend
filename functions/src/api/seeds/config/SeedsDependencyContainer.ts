@@ -4,6 +4,7 @@ import {GetSeedQueryHandler} from "../application/get/GetSeedQueryHandler";
 import {ListSeedsQueryHandler} from "../application/list/ListSeedsQueryHandler";
 import {UpdateSeedCommandHandler} from "../application/update/UpdateSeedCommandHandler";
 import {DeleteSeedCommandHandler} from "../application/delete/DeleteSeedCommandHandler";
+import {PublishSeedCommandHandler} from "../application/publish/PublishSeedCommandHandler";
 import {SeedController} from "../infrastructure/api/controllers/SeedController";
 import {SeedsRouter} from "../infrastructure/api/SeedsRouter";
 import {InMemoryCacheService} from "../../shared/infrastructure/cache/InMemoryCacheService";
@@ -39,6 +40,7 @@ const getSeedQueryHandler = new GetSeedQueryHandler(seedRepository);
 const listSeedsQueryHandler = new ListSeedsQueryHandler(seedRepository, cacheService);
 const updateSeedCommandHandler = new UpdateSeedCommandHandler(seedRepository, cacheService, imgService);
 const deleteSeedCommandHandler = new DeleteSeedCommandHandler(seedRepository, cacheService);
+const publishSeedCommandHandler = new PublishSeedCommandHandler(seedRepository, cacheService);
 
 // Event handlers
 const updateSeedOnSuggestionAcceptedEventHandler = new UpdateSeedOnSuggestionAcceptedEventHandler(updateSeedCommandHandler, cacheService);
@@ -60,7 +62,8 @@ const seedController = new SeedController(
     listSeedsQueryHandler,
     updateSeedCommandHandler,
     deleteSeedCommandHandler,
-    getOrganizationsByOwnerQueryHandler
+    getOrganizationsByOwnerQueryHandler,
+    publishSeedCommandHandler
 );
 
 // Router

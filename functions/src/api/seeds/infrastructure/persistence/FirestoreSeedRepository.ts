@@ -1,5 +1,5 @@
 import {SeedRepository} from "../../domain/repositories/SeedRepository";
-import {Seed} from "../../domain/Seed";
+import {Seed, SeedStatus} from "../../domain/Seed";
 import * as admin from "firebase-admin";
 import {SeedMapper} from "./mappers/SeedMapper";
 import {SeedEntity} from "./entities/SeedEntity";
@@ -9,6 +9,13 @@ export class FirestoreSeedRepository implements SeedRepository {
 
     async findAll(): Promise<Seed[]> {
         const snapshot = await this.db.get();
+        return snapshot.docs.map(doc => {
+            const seedEntity = SeedEntity.fromFirestore(doc);
+            return SeedMapper.toDomain(seedEntity);
+        });
+    }
+    async findAllByStatus(status: SeedStatus): Promise<Seed[]> {
+        const snapshot = await this.db.where("status", "==", status).get();
         return snapshot.docs.map(doc => {
             const seedEntity = SeedEntity.fromFirestore(doc);
             return SeedMapper.toDomain(seedEntity);

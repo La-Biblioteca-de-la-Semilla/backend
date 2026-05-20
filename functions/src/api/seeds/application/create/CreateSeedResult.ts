@@ -1,4 +1,4 @@
-import {Seed} from "../../domain/Seed";
+import {Seed, SeedStatus} from "../../domain/Seed";
 
 export class CreateSeedResult {
     constructor(
@@ -16,10 +16,10 @@ export class CreateSeedResult {
         public sfgMultisow: number | null = null,
         public sfgClump: number | null = null,
         public germinationMin: number | null = null,
-        public germinationMax: number | null = null
+        public germinationMax: number | null = null,
+        public status: SeedStatus = "draft"
     ) {
     }
-
     static fromDomain(seed: Seed): CreateSeedResult {
         return new CreateSeedResult(
             seed.id,
@@ -36,7 +36,8 @@ export class CreateSeedResult {
             seed.sfgMultisow,
             seed.sfgClump,
             seed.germinationMin,
-            seed.germinationMax
+            seed.germinationMax,
+            seed.status
         );
     }
 }

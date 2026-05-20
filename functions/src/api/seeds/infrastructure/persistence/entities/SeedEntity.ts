@@ -1,3 +1,5 @@
+import {SeedStatus} from "../../../domain/Seed";
+
 export class SeedEntity {
     constructor(
         public id: string,
@@ -14,7 +16,8 @@ export class SeedEntity {
         public sfgMultisow: number | null = null,
         public sfgClump: number | null = null,
         public germinationMin: number | null = null,
-        public germinationMax: number | null = null
+        public germinationMax: number | null = null,
+        public status: SeedStatus = "draft"
     ) {
     }
 
@@ -39,7 +42,8 @@ export class SeedEntity {
             data.sfgMultisow ?? null,
             data.sfgClump ?? null,
             data.germinationMin ?? null,
-            data.germinationMax ?? null
+            data.germinationMax ?? null,
+            (data.status as SeedStatus) ?? "published"
         );
     }
 
@@ -59,6 +63,7 @@ export class SeedEntity {
             sfgClump: this.sfgClump ?? null,
             germinationMin: this.germinationMin ?? null,
             germinationMax: this.germinationMax ?? null,
+            status: this.status,
         };
     }
 }

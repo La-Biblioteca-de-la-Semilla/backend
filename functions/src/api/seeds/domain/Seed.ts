@@ -1,3 +1,5 @@
+export type SeedStatus = "draft" | "published";
+
 export class Seed {
     constructor(
         public readonly id: string,
@@ -14,11 +16,14 @@ export class Seed {
         public sfgMultisow: number | null = null,
         public sfgClump: number | null = null,
         public germinationMin: number | null = null,
-        public germinationMax: number | null = null
+        public germinationMax: number | null = null,
+        public status: SeedStatus = "draft"
     ) {
     }
-
-    public update(data: Partial<Omit<Seed, "id">>) {
+    public publish(): void {
+        this.status = "published";
+    }
+    public update(data: Partial<Omit<Seed, "id" | "status">>) {
         this.name = data.name ?? this.name;
         this.species = data.species ?? this.species;
         this.image = data.image ?? this.image;

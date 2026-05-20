@@ -29,7 +29,8 @@ export class GetSeedQueryHandler implements QueryHandler<GetSeedQuery, GetSeedRe
             seed.sfgMultisow,
             seed.sfgClump,
             seed.germinationMin,
-            seed.germinationMax
+            seed.germinationMax,
+            seed.status
         );
     }
 }
