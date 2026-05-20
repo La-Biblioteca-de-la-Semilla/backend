@@ -1,3 +1,5 @@
+import {SeedStatus} from "../../../domain/Seed";
+
 export class SeedAPIResponse {
     constructor(
         public readonly id: string,
@@ -14,7 +16,8 @@ export class SeedAPIResponse {
         public sfgMultisow: number | null = null,
         public sfgClump: number | null = null,
         public germinationMin: number | null = null,
-        public germinationMax: number | null = null
+        public germinationMax: number | null = null,
+        public status: SeedStatus = "draft"
     ) {
     }
 }

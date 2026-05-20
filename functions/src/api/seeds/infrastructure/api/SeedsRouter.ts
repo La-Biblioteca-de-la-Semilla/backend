@@ -24,6 +24,10 @@ export class SeedsRouter {
             authenticate,
             (req, res) => this.seedController.updateSeed(req, res)
         );
+        this.router.post("/:id/publish",
+            authenticate,
+            (req, res) => this.seedController.publishSeed(req, res)
+        );
         this.router.delete("/:id",
             authenticate,
             (req, res) => this.seedController.deleteSeed(req, res)

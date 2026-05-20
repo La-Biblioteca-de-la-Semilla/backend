@@ -13,13 +13,17 @@ export class ListSeedsQueryHandler implements QueryHandler<ListSeedsQuery, ListS
     ) {
     }
 
-    async handle(): Promise<ListSeedsResult> {
-        const cachedResult = this.cacheService.get<ListSeedsResult>(SEEDS_LIST_CACHE_KEY);
-        if (cachedResult) {
-            return cachedResult;
+    async handle(query: ListSeedsQuery): Promise<ListSeedsResult> {
+        const isDraft = query.status === "draft";
+
+        if (!isDraft) {
+            const cachedResult = this.cacheService.get<ListSeedsResult>(SEEDS_LIST_CACHE_KEY);
+            if (cachedResult) {
+                return cachedResult;
+            }
         }
 
-        const seeds = await this.repository.findAll();
+        const seeds = await this.repository.findAllByStatus(query.status);
         const seedResults = seeds.map((seed) => {
             return new SeedResult(
                 seed.id,
@@ -36,13 +40,16 @@ export class ListSeedsQueryHandler implements QueryHandler<ListSeedsQuery, ListS
                 seed.sfgMultisow,
                 seed.sfgClump,
                 seed.germinationMin,
-                seed.germinationMax
+                seed.germinationMax,
+                seed.status
             );
         });
 
         const result = new ListSeedsResult(seedResults);
 
-        this.cacheService.set(SEEDS_LIST_CACHE_KEY, result);
+        if (!isDraft) {
+            this.cacheService.set(SEEDS_LIST_CACHE_KEY, result);
+        }
 
         return result;
     }

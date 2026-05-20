@@ -19,10 +19,10 @@ export class SeedMapper {
             seed.sfgMultisow,
             seed.sfgClump,
             seed.germinationMin,
-            seed.germinationMax
+            seed.germinationMax,
+            seed.status
         );
     }
-
     static toDomain(seedEntity: SeedEntity): Seed {
         return new Seed(
             seedEntity.id,
@@ -39,7 +39,8 @@ export class SeedMapper {
             seedEntity.sfgMultisow,
             seedEntity.sfgClump,
             seedEntity.germinationMin,
-            seedEntity.germinationMax
+            seedEntity.germinationMax,
+            seedEntity.status
         );
     }
 }

@@ -8,6 +8,10 @@ import {CreateSeedCommand} from "../../../application/create/CreateSeedCommand";
 import {GetSeedQuery} from "../../../application/get/GetSeedQuery";
 import {UpdateSeedCommand} from "../../../application/update/UpdateSeedCommand";
 import {DeleteSeedCommand} from "../../../application/delete/DeleteSeedCommand";
+import {PublishSeedCommandHandler} from "../../../application/publish/PublishSeedCommandHandler";
+import {PublishSeedCommand} from "../../../application/publish/PublishSeedCommand";
+import {ListSeedsQuery} from "../../../application/list/ListSeedsQuery";
+import {SeedStatus} from "../../../domain/Seed";
 import {SeedAPIResponse} from "./SeedAPIResponse";
 import {ListSeedAPIResponse} from "./ListSeedAPIResponse";
 import {AuthenticatedRequest} from "../../../../shared/infrastructure/api/middleware/authMiddleware";
@@ -21,7 +25,8 @@ export class SeedController {
         private readonly listSeedsQueryHandler: ListSeedsQueryHandler,
         private readonly updateSeedCommandHandler: UpdateSeedCommandHandler,
         private readonly deleteSeedCommandHandler: DeleteSeedCommandHandler,
-        private readonly getOrganizationsByOwnerQueryHandler: GetOrganizationsByOwnerQueryHandler
+        private readonly getOrganizationsByOwnerQueryHandler: GetOrganizationsByOwnerQueryHandler,
+        private readonly publishSeedCommandHandler: PublishSeedCommandHandler
     ) {
     }
 
@@ -75,7 +80,8 @@ export class SeedController {
                 result.sfgMultisow,
                 result.sfgClump,
                 result.germinationMin,
-                result.germinationMax
+                result.germinationMax,
+                result.status
             ));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
@@ -94,6 +100,20 @@ export class SeedController {
                 return;
             }
 
+            if (result.status === "draft") {
+                const authReq = req as AuthenticatedRequest;
+                if (!authReq.user) {
+                    res.status(404).json({error: `Seed with ID ${req.params.id} not found`});
+                    return;
+                }
+                const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+                const isOwner = userOrgs.organizations.some(org => org.id === result.owner);
+                if (!isOwner) {
+                    res.status(404).json({error: `Seed with ID ${req.params.id} not found`});
+                    return;
+                }
+            }
+
             res.json(new SeedAPIResponse(
                 result.id,
                 result.name,
@@ -109,7 +129,8 @@ export class SeedController {
                 result.sfgMultisow,
                 result.sfgClump,
                 result.germinationMin,
-                result.germinationMax
+                result.germinationMax,
+                result.status
             ));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
@@ -118,9 +139,43 @@ export class SeedController {
     }
 
 
-    async listSeeds(_req: Request, res: Response): Promise<void> {
+    async listSeeds(req: Request, res: Response): Promise<void> {
         try {
-            const result = await this.listSeedsQueryHandler.handle();
+            const requestedStatus = req.query.status as SeedStatus | undefined;
+            const isDraft = requestedStatus === "draft";
+
+            if (isDraft) {
+                const authReq = req as AuthenticatedRequest;
+                if (!authReq.user) {
+                    res.status(401).json({error: "Authentication required"});
+                    return;
+                }
+                const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+                const userOrgIds = userOrgs.organizations.map(org => org.id);
+                const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("draft"));
+                const filtered = result.seeds.filter(seed => userOrgIds.includes(seed.owner));
+                res.json(new ListSeedAPIResponse(filtered.map(seed => new SeedAPIResponse(
+                    seed.id,
+                    seed.name,
+                    seed.species,
+                    seed.image,
+                    seed.owner,
+                    seed.description,
+                    seed.sentOn,
+                    seed.tags,
+                    seed.sow,
+                    seed.family,
+                    seed.sfgOriginal,
+                    seed.sfgMultisow,
+                    seed.sfgClump,
+                    seed.germinationMin,
+                    seed.germinationMax,
+                    seed.status
+                ))));
+                return;
+            }
+
+            const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("published"));
             res.json(new ListSeedAPIResponse(result.seeds.map(seed => new SeedAPIResponse(
                 seed.id,
                 seed.name,
@@ -136,7 +191,8 @@ export class SeedController {
                 seed.sfgMultisow,
                 seed.sfgClump,
                 seed.germinationMin,
-                seed.germinationMax
+                seed.germinationMax,
+                seed.status
             ))));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
@@ -199,7 +255,8 @@ export class SeedController {
                 response.sfgMultisow,
                 response.sfgClump,
                 response.germinationMin,
-                response.germinationMax
+                response.germinationMax,
+                response.status
             ));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
@@ -207,6 +264,57 @@ export class SeedController {
                 res.status(404).json({error: message});
             } else {
                 res.status(400).json({error: message});
+            }
+        }
+    }
+
+
+    async publishSeed(req: Request, res: Response): Promise<void> {
+        try {
+            const authReq = req as AuthenticatedRequest;
+            if (!authReq.user) {
+                res.status(401).json({error: "Authentication required"});
+                return;
+            }
+
+            const seed = await this.getSeedQueryHandler.handle(new GetSeedQuery(req.params.id));
+            if (!seed) {
+                res.status(404).json({error: `Seed with ID ${req.params.id} not found`});
+                return;
+            }
+
+            const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
+            const isOwner = userOrgs.organizations.some(org => org.id === seed.owner);
+            if (!isOwner) {
+                res.status(403).json({error: "You don't have permission to publish this seed"});
+                return;
+            }
+
+            const result = await this.publishSeedCommandHandler.handle(new PublishSeedCommand(req.params.id));
+            res.json(new SeedAPIResponse(
+                result.id,
+                result.name,
+                result.species,
+                result.image,
+                result.owner,
+                result.description,
+                result.sentOn,
+                result.tags,
+                result.sow,
+                result.family,
+                result.sfgOriginal,
+                result.sfgMultisow,
+                result.sfgClump,
+                result.germinationMin,
+                result.germinationMax,
+                result.status
+            ));
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            if (message.includes("not found")) {
+                res.status(404).json({error: message});
+            } else {
+                res.status(500).json({error: message});
             }
         }
     }

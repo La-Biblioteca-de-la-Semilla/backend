@@ -23,7 +23,7 @@ service cloud.firestore {
     }
     
   	match /seeds/{id} {
-      allow read: if true;
+      allow read: if resource.data.status == "published" || (request.auth != null && isSeedOwner());
       allow create: if request.auth != null && isOrgOwner();
       allow update, delete: if request.auth != null && isSeedOwner();
       

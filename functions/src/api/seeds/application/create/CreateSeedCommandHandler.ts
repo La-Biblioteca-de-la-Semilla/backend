@@ -37,7 +37,8 @@ export class CreateSeedCommandHandler implements CommandHandler<CreateSeedComman
             command.sfgMultisow,
             command.sfgClump,
             command.germinationMin,
-            command.germinationMax
+            command.germinationMax,
+            "draft"
         );
 
         const savedSeed = await this.repository.save(seed);
