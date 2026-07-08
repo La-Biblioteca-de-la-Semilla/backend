@@ -11,7 +11,6 @@ import {DeleteSeedCommand} from "../../../application/delete/DeleteSeedCommand";
 import {PublishSeedCommandHandler} from "../../../application/publish/PublishSeedCommandHandler";
 import {PublishSeedCommand} from "../../../application/publish/PublishSeedCommand";
 import {ListSeedsQuery} from "../../../application/list/ListSeedsQuery";
-import {SeedStatus} from "../../../domain/Seed";
 import {SeedAPIResponse} from "./SeedAPIResponse";
 import {ListSeedAPIResponse} from "./ListSeedAPIResponse";
 import {AuthenticatedRequest} from "../../../../shared/infrastructure/api/middleware/authMiddleware";
@@ -65,24 +64,7 @@ export class SeedController {
             );
 
             const result = await this.createSeedCommandHandler.handle(command);
-            res.json(new SeedAPIResponse(
-                result.id,
-                result.name,
-                result.species,
-                result.image,
-                result.owner,
-                result.description,
-                result.sentOn,
-                result.tags,
-                result.sow,
-                result.family,
-                result.sfgOriginal,
-                result.sfgMultisow,
-                result.sfgClump,
-                result.germinationMin,
-                result.germinationMax,
-                result.status
-            ));
+            res.json(SeedAPIResponse.fromSeed(result));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             res.status(400).json({error: message});
@@ -114,24 +96,7 @@ export class SeedController {
                 }
             }
 
-            res.json(new SeedAPIResponse(
-                result.id,
-                result.name,
-                result.species,
-                result.image,
-                result.owner,
-                result.description,
-                result.sentOn,
-                result.tags,
-                result.sow,
-                result.family,
-                result.sfgOriginal,
-                result.sfgMultisow,
-                result.sfgClump,
-                result.germinationMin,
-                result.germinationMax,
-                result.status
-            ));
+            res.json(SeedAPIResponse.fromSeed(result));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             res.status(500).json({error: message});
@@ -141,8 +106,7 @@ export class SeedController {
 
     async listSeeds(req: Request, res: Response): Promise<void> {
         try {
-            const requestedStatus = req.query.status as SeedStatus | undefined;
-            const isDraft = requestedStatus === "draft";
+            const isDraft = req.query.draft === "true";
 
             if (isDraft) {
                 const authReq = req as AuthenticatedRequest;
@@ -154,46 +118,12 @@ export class SeedController {
                 const userOrgIds = userOrgs.organizations.map(org => org.id);
                 const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("draft"));
                 const filtered = result.seeds.filter(seed => userOrgIds.includes(seed.owner));
-                res.json(new ListSeedAPIResponse(filtered.map(seed => new SeedAPIResponse(
-                    seed.id,
-                    seed.name,
-                    seed.species,
-                    seed.image,
-                    seed.owner,
-                    seed.description,
-                    seed.sentOn,
-                    seed.tags,
-                    seed.sow,
-                    seed.family,
-                    seed.sfgOriginal,
-                    seed.sfgMultisow,
-                    seed.sfgClump,
-                    seed.germinationMin,
-                    seed.germinationMax,
-                    seed.status
-                ))));
+                res.json(new ListSeedAPIResponse(filtered.map(seed => SeedAPIResponse.fromSeed(seed))));
                 return;
             }
 
             const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("published"));
-            res.json(new ListSeedAPIResponse(result.seeds.map(seed => new SeedAPIResponse(
-                seed.id,
-                seed.name,
-                seed.species,
-                seed.image,
-                seed.owner,
-                seed.description,
-                seed.sentOn,
-                seed.tags,
-                seed.sow,
-                seed.family,
-                seed.sfgOriginal,
-                seed.sfgMultisow,
-                seed.sfgClump,
-                seed.germinationMin,
-                seed.germinationMax,
-                seed.status
-            ))));
+            res.json(new ListSeedAPIResponse(result.seeds.map(seed => SeedAPIResponse.fromSeed(seed))));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             res.status(500).json({error: message});
@@ -240,24 +170,7 @@ export class SeedController {
             );
 
             const response = await this.updateSeedCommandHandler.handle(command);
-            res.status(204).send(new SeedAPIResponse(
-                response.id,
-                response.name,
-                response.species,
-                response.image,
-                response.owner,
-                response.description,
-                response.sentOn,
-                response.tags,
-                response.sow,
-                response.family,
-                response.sfgOriginal,
-                response.sfgMultisow,
-                response.sfgClump,
-                response.germinationMin,
-                response.germinationMax,
-                response.status
-            ));
+            res.status(204).send(SeedAPIResponse.fromSeed(response));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             if (message.includes("not found")) {
@@ -291,24 +204,7 @@ export class SeedController {
             }
 
             const result = await this.publishSeedCommandHandler.handle(new PublishSeedCommand(req.params.id));
-            res.json(new SeedAPIResponse(
-                result.id,
-                result.name,
-                result.species,
-                result.image,
-                result.owner,
-                result.description,
-                result.sentOn,
-                result.tags,
-                result.sow,
-                result.family,
-                result.sfgOriginal,
-                result.sfgMultisow,
-                result.sfgClump,
-                result.germinationMin,
-                result.germinationMax,
-                result.status
-            ));
+            res.json(SeedAPIResponse.fromSeed(result));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             if (message.includes("not found")) {

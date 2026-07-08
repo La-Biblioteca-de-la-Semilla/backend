@@ -8,6 +8,27 @@ export interface AuthenticatedRequest extends Request {
     };
 }
 
+export const authenticateOptional = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.split("Bearer ")[1];
+            const decodedToken = await admin.auth().verifyIdToken(token);
+            (req as AuthenticatedRequest).user = {
+                uid: decodedToken.uid,
+                email: decodedToken.email || ""
+            };
+        }
+    } catch (error) {
+        console.error("Optional authentication error:", error);
+    }
+    next();
+};
+
 export const authenticate = async (
     req: Request,
     res: Response,

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { SeedController } from "./controllers/SeedController";
-import { authenticate } from "../../../shared/infrastructure/api/middleware/authMiddleware";
+import { authenticate, authenticateOptional } from "../../../shared/infrastructure/api/middleware/authMiddleware";
 
 export class SeedsRouter {
     private readonly router: Router;
@@ -13,7 +13,7 @@ export class SeedsRouter {
     }
 
     private initializeRoutes(): void {
-        this.router.get("/", (req, res) => this.seedController.listSeeds(req, res));
+        this.router.get("/", authenticateOptional, (req, res) => this.seedController.listSeeds(req, res));
         this.router.get("/:id", (req, res) => this.seedController.getSeed(req, res));
 
         this.router.post("/",
