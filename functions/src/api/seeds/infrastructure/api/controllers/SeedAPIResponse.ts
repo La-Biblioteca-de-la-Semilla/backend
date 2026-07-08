@@ -1,5 +1,24 @@
 import {SeedStatus} from "../../../domain/Seed";
 
+export interface SeedLike {
+    id: string;
+    name: string;
+    species: string;
+    image: string;
+    owner: string;
+    description: string | null;
+    sentOn: string | null;
+    tags: string[] | null;
+    sow: number[] | null;
+    family: string | null;
+    sfgOriginal: number | null;
+    sfgMultisow: number | null;
+    sfgClump: number | null;
+    germinationMin: number | null;
+    germinationMax: number | null;
+    status: SeedStatus;
+}
+
 export class SeedAPIResponse {
     constructor(
         public readonly id: string,
@@ -19,5 +38,26 @@ export class SeedAPIResponse {
         public germinationMax: number | null = null,
         public status: SeedStatus = "draft"
     ) {
+    }
+
+    static fromSeed(seed: SeedLike): SeedAPIResponse {
+        return new SeedAPIResponse(
+            seed.id,
+            seed.name,
+            seed.species,
+            seed.image,
+            seed.owner,
+            seed.description,
+            seed.sentOn,
+            seed.tags,
+            seed.sow,
+            seed.family,
+            seed.sfgOriginal,
+            seed.sfgMultisow,
+            seed.sfgClump,
+            seed.germinationMin,
+            seed.germinationMax,
+            seed.status
+        );
     }
 }
