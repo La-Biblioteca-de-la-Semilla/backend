@@ -7,7 +7,6 @@ import {DeleteSeedCommandHandler} from "../application/delete/DeleteSeedCommandH
 import {PublishSeedCommandHandler} from "../application/publish/PublishSeedCommandHandler";
 import {SeedController} from "../infrastructure/api/controllers/SeedController";
 import {SeedsRouter} from "../infrastructure/api/SeedsRouter";
-import {InMemoryCacheService} from "../../shared/infrastructure/cache/InMemoryCacheService";
 import {FirebaseCloudStorageService} from "../../shared/infrastructure/storage/FirebaseCloudStorageService";
 import {FirestoreOrganizationRepository} from "../../organization/infrastructure/persistence/FirestoreOrganizationRepository";
 import {GetOrganizationsByOwnerQueryHandler} from "../../organization/application/get-organizations-by-owner/GetOrganizationsByOwnerQueryHandler";
@@ -31,19 +30,18 @@ const publicURL = config.getRequired("APP_STORAGE_BASE_URL");
 const seedRepository = new FirestoreSeedRepository();
 const organizationRepository = new FirestoreOrganizationRepository();
 const getOrganizationsByOwnerQueryHandler = new GetOrganizationsByOwnerQueryHandler(organizationRepository);
-const cacheService = new InMemoryCacheService();
 const imgService = new FirebaseCloudStorageService(publicURL);
 
 // CQRS
-const createSeedCommandHandler = new CreateSeedCommandHandler(seedRepository, cacheService, imgService);
+const createSeedCommandHandler = new CreateSeedCommandHandler(seedRepository, imgService);
 const getSeedQueryHandler = new GetSeedQueryHandler(seedRepository);
-const listSeedsQueryHandler = new ListSeedsQueryHandler(seedRepository, cacheService);
-const updateSeedCommandHandler = new UpdateSeedCommandHandler(seedRepository, cacheService, imgService);
-const deleteSeedCommandHandler = new DeleteSeedCommandHandler(seedRepository, cacheService);
-const publishSeedCommandHandler = new PublishSeedCommandHandler(seedRepository, cacheService);
+const listSeedsQueryHandler = new ListSeedsQueryHandler(seedRepository);
+const updateSeedCommandHandler = new UpdateSeedCommandHandler(seedRepository, imgService);
+const deleteSeedCommandHandler = new DeleteSeedCommandHandler(seedRepository);
+const publishSeedCommandHandler = new PublishSeedCommandHandler(seedRepository);
 
 // Event handlers
-const updateSeedOnSuggestionAcceptedEventHandler = new UpdateSeedOnSuggestionAcceptedEventHandler(updateSeedCommandHandler, cacheService);
+const updateSeedOnSuggestionAcceptedEventHandler = new UpdateSeedOnSuggestionAcceptedEventHandler(updateSeedCommandHandler);
 eventBus.subscribe(
     SuggestionAcceptedEvent.EVENT_NAME,
     (event) => updateSeedOnSuggestionAcceptedEventHandler.handle(event)

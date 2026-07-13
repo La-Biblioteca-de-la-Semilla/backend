@@ -11,6 +11,7 @@ import {DeleteSeedCommand} from "../../../application/delete/DeleteSeedCommand";
 import {PublishSeedCommandHandler} from "../../../application/publish/PublishSeedCommandHandler";
 import {PublishSeedCommand} from "../../../application/publish/PublishSeedCommand";
 import {ListSeedsQuery} from "../../../application/list/ListSeedsQuery";
+import {SeedFilters} from "../../../application/list/SeedFilters";
 import {SeedAPIResponse} from "./SeedAPIResponse";
 import {ListSeedAPIResponse} from "./ListSeedAPIResponse";
 import {AuthenticatedRequest} from "../../../../shared/infrastructure/api/middleware/authMiddleware";
@@ -106,29 +107,64 @@ export class SeedController {
 
     async listSeeds(req: Request, res: Response): Promise<void> {
         try {
-            const isDraft = req.query.draft === "true";
+            const page = Math.max(1, parseInt(req.query.page as string) || 1);
+            const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+            const filters = await this.buildFilters(req);
 
-            if (isDraft) {
-                const authReq = req as AuthenticatedRequest;
-                if (!authReq.user) {
-                    res.status(401).json({error: "Authentication required"});
-                    return;
-                }
-                const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authReq.user.uid));
-                const userOrgIds = userOrgs.organizations.map(org => org.id);
-                const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("draft"));
-                const filtered = result.seeds.filter(seed => userOrgIds.includes(seed.owner));
-                res.json(new ListSeedAPIResponse(filtered.map(seed => SeedAPIResponse.fromSeed(seed))));
-                return;
-            }
-
-            const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery("published"));
-            res.json(new ListSeedAPIResponse(result.seeds.map(seed => SeedAPIResponse.fromSeed(seed))));
+            const result = await this.listSeedsQueryHandler.handle(new ListSeedsQuery(page, limit, filters));
+            res.json(new ListSeedAPIResponse(result.seeds.map(seed => SeedAPIResponse.fromSeed(seed)), result.total, result.page, result.limit));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             res.status(500).json({error: message});
         }
     }
+
+    private async buildFilters(req: Request): Promise<SeedFilters> {
+        const filters: SeedFilters = {};
+
+        if (req.query.search) {
+            filters.search = req.query.search as string;
+        }
+        if (req.query.tags) {
+            filters.tags = Array.isArray(req.query.tags)
+                ? (req.query.tags as string[])
+                : [req.query.tags as string];
+        }
+        if (req.query.sentOn) {
+            filters.sentOn = req.query.sentOn as string;
+        }
+        if (req.query.family) {
+            filters.family = req.query.family as string;
+        }
+        if (req.query.sowing) {
+            const rawSowing = Array.isArray(req.query.sowing)
+                ? (req.query.sowing as string[])
+                : [req.query.sowing as string];
+            filters.sowing = rawSowing.map(Number).filter(n => !isNaN(n));
+        }
+        const authUser = (req as AuthenticatedRequest).user;
+        if (authUser) {
+            if (req.query.userHaveIds) {
+                filters.userHaveIds = Array.isArray(req.query.userHaveIds)
+                    ? (req.query.userHaveIds as string[])
+                    : [req.query.userHaveIds as string];
+            }
+            if (req.query.userWantIds) {
+                filters.userWantIds = Array.isArray(req.query.userWantIds)
+                    ? (req.query.userWantIds as string[])
+                    : [req.query.userWantIds as string];
+            }
+
+            const isDraft = req.query.draft === "true";
+            if (isDraft) {
+                const userOrgs = await this.getOrganizationsByOwnerQueryHandler.handle(new GetOrganizationsByOwnerQuery(authUser.uid));
+                filters.ownerIds = userOrgs.organizations.map(org => org.id);
+            }
+        }
+
+        return filters;
+    }
+
 
 
     async updateSeed(req: Request, res: Response): Promise<void> {
