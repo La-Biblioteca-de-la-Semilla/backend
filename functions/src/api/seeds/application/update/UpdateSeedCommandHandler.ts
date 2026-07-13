@@ -1,15 +1,12 @@
 import {UpdateSeedCommand} from "./UpdateSeedCommand";
 import type {CommandHandler} from "../../../shared/application/CommandHandler";
 import type {SeedRepository} from "../../domain/repositories/SeedRepository";
-import {CacheService} from "../../../shared/application/CacheService";
 import {ImageService} from "../../../shared/application/ImageService";
-import {SEEDS_LIST_CACHE_KEY} from "../../config/CacheKeys";
 import {UpdateSeedResult} from "./UpdateSeedResult";
 
 export class UpdateSeedCommandHandler implements CommandHandler<UpdateSeedCommand, UpdateSeedResult> {
     constructor(
         private readonly repository: SeedRepository,
-        private readonly cacheService: CacheService,
         private readonly imageService: ImageService
     ) {
     }
@@ -45,7 +42,6 @@ export class UpdateSeedCommandHandler implements CommandHandler<UpdateSeedComman
         });
 
         const savedSeed = await this.repository.save(seed);
-        this.cacheService.invalidate(SEEDS_LIST_CACHE_KEY);
         return UpdateSeedResult.fromDomain(savedSeed);
     }
 }

@@ -1,9 +1,11 @@
 export type SeedStatus = "draft" | "published";
 
 export class Seed {
+    public name: string;
+
     constructor(
         public readonly id: string,
-        public name: string,
+        name: string,
         public species: string,
         public image: string,
         public readonly owner: string,
@@ -19,12 +21,17 @@ export class Seed {
         public germinationMax: number | null = null,
         public status: SeedStatus = "draft"
     ) {
+        this.name = Seed.capitalize(name);
     }
     public publish(): void {
         this.status = "published";
     }
+    private static capitalize(value: string): string {
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
     public update(data: Partial<Omit<Seed, "id" | "status">>) {
-        this.name = data.name ?? this.name;
+        this.name = data.name ? Seed.capitalize(data.name) : this.name;
         this.species = data.species ?? this.species;
         this.image = data.image ?? this.image;
         this.description = data.description ?? this.description;

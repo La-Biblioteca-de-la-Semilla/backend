@@ -1,13 +1,10 @@
 import {DeleteSeedCommand} from "./DeleteSeedCommand";
 import type {CommandHandler} from "../../../shared/application/CommandHandler";
 import type {SeedRepository} from "../../domain/repositories/SeedRepository";
-import {CacheService} from "../../../shared/application/CacheService";
-import {SEEDS_LIST_CACHE_KEY} from "../../config/CacheKeys";
 
 export class DeleteSeedCommandHandler implements CommandHandler<DeleteSeedCommand, void> {
     constructor(
         private readonly repository: SeedRepository,
-        private readonly cacheService: CacheService
     ) {
     }
 
@@ -18,6 +15,5 @@ export class DeleteSeedCommandHandler implements CommandHandler<DeleteSeedComman
         }
 
         await this.repository.delete(command.id);
-        this.cacheService.invalidate(SEEDS_LIST_CACHE_KEY);
     }
 }

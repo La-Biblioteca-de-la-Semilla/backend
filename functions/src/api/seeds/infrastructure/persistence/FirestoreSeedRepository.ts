@@ -1,4 +1,4 @@
-import {SeedRepository} from "../../domain/repositories/SeedRepository";
+import {PaginatedSeeds, SeedRepository} from "../../domain/repositories/SeedRepository";
 import {Seed, SeedStatus} from "../../domain/Seed";
 import * as admin from "firebase-admin";
 import {SeedMapper} from "./mappers/SeedMapper";
@@ -20,6 +20,22 @@ export class FirestoreSeedRepository implements SeedRepository {
             const seedEntity = SeedEntity.fromFirestore(doc);
             return SeedMapper.toDomain(seedEntity);
         });
+    }
+
+    async findByStatusPaginated(status: SeedStatus, page: number, limit: number, ownerIds?: string[]): Promise<PaginatedSeeds> {
+        let baseQuery: FirebaseFirestore.Query = this.db.where("status", "==", status);
+        if (ownerIds && ownerIds.length > 0) {
+            baseQuery = baseQuery.where("owner", "in", ownerIds);
+        }
+        const countSnapshot = await baseQuery.count().get();
+        const total = countSnapshot.data().count;
+        const offset = (page - 1) * limit;
+        const snapshot = await baseQuery.orderBy("name").offset(offset).limit(limit).get();
+        const seeds = snapshot.docs.map(doc => {
+            const seedEntity = SeedEntity.fromFirestore(doc);
+            return SeedMapper.toDomain(seedEntity);
+        });
+        return {seeds, total};
     }
 
     async findById(id: string): Promise<Seed | null> {

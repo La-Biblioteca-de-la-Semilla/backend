@@ -1,7 +1,12 @@
 import {SeedStatus} from "../../domain/Seed";
 
 export class ListSeedsResult {
-    constructor(public readonly seeds: SeedResult[]) {
+    constructor(
+        public readonly seeds: SeedResult[],
+        public readonly total: number,
+        public readonly page: number,
+        public readonly limit: number
+    ) {
     }
 }
 

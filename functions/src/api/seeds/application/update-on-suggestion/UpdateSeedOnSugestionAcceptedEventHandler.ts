@@ -2,14 +2,11 @@ import {UpdateSeedCommandHandler} from "../update/UpdateSeedCommandHandler";
 import {DomainEvent} from "../../../shared/domain/events/DomainEvent";
 import {SuggestionAcceptedEvent} from "../../../suggestions/domain/events/SuggestionAcceptedEvent";
 import {UpdateSeedCommand} from "../update/UpdateSeedCommand";
-import {SEEDS_LIST_CACHE_KEY} from "../../config/CacheKeys";
-import {CacheService} from "../../../shared/application/CacheService";
 
 
 export class UpdateSeedOnSuggestionAcceptedEventHandler {
     constructor(
         private readonly updateSeedCommandHandler: UpdateSeedCommandHandler,
-        private readonly cacheService: CacheService
     ) {}
 
     async handle(event: DomainEvent): Promise<void> {
@@ -37,7 +34,5 @@ export class UpdateSeedOnSuggestionAcceptedEventHandler {
         );
 
         await this.updateSeedCommandHandler.handle(updateSeedCommand);
-
-        this.cacheService.invalidate(SEEDS_LIST_CACHE_KEY);
     }
 }
