@@ -3,6 +3,7 @@ import {Seed, SeedStatus} from "../../domain/Seed";
 import * as admin from "firebase-admin";
 import {SeedMapper} from "./mappers/SeedMapper";
 import {SeedEntity} from "./entities/SeedEntity";
+import {SeedFilters} from "../../application/list/SeedFilters";
 
 export class FirestoreSeedRepository implements SeedRepository {
     private db = admin.firestore().collection("seeds");
@@ -14,28 +15,40 @@ export class FirestoreSeedRepository implements SeedRepository {
             return SeedMapper.toDomain(seedEntity);
         });
     }
-    async findAllByStatus(status: SeedStatus): Promise<Seed[]> {
-        const snapshot = await this.db.where("status", "==", status).get();
-        return snapshot.docs.map(doc => {
-            const seedEntity = SeedEntity.fromFirestore(doc);
-            return SeedMapper.toDomain(seedEntity);
-        });
+
+    private buildBaseQuery(filters: SeedFilters): FirebaseFirestore.Query {
+        const status: SeedStatus = filters.status ?? "published";
+        let query: FirebaseFirestore.Query = this.db.where("status", "==", status);
+
+        if (filters.ownerIds && filters.ownerIds.length > 0) {
+            query = query.where("owner", "in", filters.ownerIds);
+        }
+
+        if (filters.family) {
+            query = query.where("family", "==", filters.family);
+        }
+
+        if (filters.sentOn) {
+            query = query.where("sentOn", "==", filters.sentOn);
+        }
+
+        return query;
     }
 
-    async findByStatusPaginated(status: SeedStatus, page: number, limit: number, ownerIds?: string[]): Promise<PaginatedSeeds> {
-        let baseQuery: FirebaseFirestore.Query = this.db.where("status", "==", status);
-        if (ownerIds && ownerIds.length > 0) {
-            baseQuery = baseQuery.where("owner", "in", ownerIds);
+    async findByFilters(filters: SeedFilters, page?: number, limit?: number): Promise<PaginatedSeeds> {
+        const baseQuery = this.buildBaseQuery(filters);
+        if (page !== undefined && limit !== undefined) {
+            const countSnapshot = await baseQuery.count().get();
+            const total = countSnapshot.data().count;
+            const offset = (page - 1) * limit;
+            const snapshot = await baseQuery.orderBy("name").offset(offset).limit(limit).get();
+            const seeds = snapshot.docs.map(doc => SeedMapper.toDomain(SeedEntity.fromFirestore(doc)));
+            return {seeds, total};
+        } else {
+            const snapshot = await baseQuery.get();
+            const seeds = snapshot.docs.map(doc => SeedMapper.toDomain(SeedEntity.fromFirestore(doc)));
+            return {seeds, total: seeds.length};
         }
-        const countSnapshot = await baseQuery.count().get();
-        const total = countSnapshot.data().count;
-        const offset = (page - 1) * limit;
-        const snapshot = await baseQuery.orderBy("name").offset(offset).limit(limit).get();
-        const seeds = snapshot.docs.map(doc => {
-            const seedEntity = SeedEntity.fromFirestore(doc);
-            return SeedMapper.toDomain(seedEntity);
-        });
-        return {seeds, total};
     }
 
     async findById(id: string): Promise<Seed | null> {
