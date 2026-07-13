@@ -1,4 +1,5 @@
-import {Seed, SeedStatus} from "../Seed";
+import {Seed} from "../Seed";
+import {SeedFilters} from "../../application/list/SeedFilters";
 
 export interface PaginatedSeeds {
     seeds: Seed[];
@@ -8,9 +9,7 @@ export interface PaginatedSeeds {
 export interface SeedRepository {
     findAll(): Promise<Seed[]>;
 
-    findAllByStatus(status: SeedStatus): Promise<Seed[]>;
-
-    findByStatusPaginated(status: SeedStatus, page: number, limit: number, ownerIds?: string[]): Promise<PaginatedSeeds>;
+    findByFilters(filters: SeedFilters, page?: number, limit?: number): Promise<PaginatedSeeds>;
 
     findById(id: string): Promise<Seed | null>;
 
