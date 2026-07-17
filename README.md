@@ -125,6 +125,72 @@ En el código, estas variables se acceden a través de la clase `EnvConfigServic
   - Desarrollo: `IMGBB_API_KEY=tu_api_key_aquí` en `.env.development`
   - Producción: `firebase functions:config:set imgbb.api_key="tu_api_key_aquí"`
 
+## Emulador de PostgreSQL (Base de Datos Local)
+
+El proyecto usa PostgreSQL como base de datos principal. Para desarrollo local se incluye un `docker-compose.yml` que levanta una instancia de PostgreSQL sin necesidad de instalar nada más que Docker.
+
+### Requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) o Docker Engine + Compose
+
+### Iniciar la base de datos
+
+```bash
+# Desde el directorio functions/
+npm run db:start
+```
+
+Esto levanta un contenedor PostgreSQL 16 en `localhost:5432` con:
+- **Usuario**: `seeds`
+- **Contraseña**: `seeds`
+- **Base de datos**: `seeds_db`
+
+Los datos persisten en un volumen Docker entre reinicios.
+
+### Configurar la conexión
+
+Copia `.env.example` a `.env` en el directorio `functions/` y ajusta si es necesario:
+
+```bash
+cp functions/.env.example functions/.env
+```
+
+El valor por defecto ya apunta al contenedor local:
+```
+DATABASE_URL=postgresql://seeds:seeds@localhost:5432/seeds_db
+```
+
+### Ejecutar las migraciones
+
+Una vez la base de datos esté en marcha, aplica el esquema:
+
+```bash
+cd functions
+npm run migrate
+```
+
+### Parar la base de datos
+
+```bash
+cd functions
+npm run db:stop
+```
+
+### Flujo completo de desarrollo
+
+```bash
+# 1. Levantar PostgreSQL
+cd functions && npm run db:start
+
+# 2. Aplicar migraciones (solo la primera vez o tras nuevas migraciones)
+npm run migrate
+
+# 3. Iniciar los emuladores de Firebase + Functions
+npm run serve
+```
+
+---
+
 ## Estructura del Proyecto
 
 El proyecto está organizado en módulos:
