@@ -3,15 +3,13 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
-    "build:watch": "tsc --watch",
-    "serve": "npm run build && firebase emulators:start",
-    "serve:dev": "npm run build && FIRESTORE_EMULATOR_HOST=localhost:8080 firebase emulators:start",
-    "serve:with-data": "npm run build && firebase emulators:start --import=../emulator-data --export-on-exit=../emulator-data",
-    "seed": "node scripts/seed-firestore.js",
-    "shell": "npm run build && firebase functions:shell",
+    "serve": "npm run db:start && node scripts/wait-for-db.js && npm run migrate && npm run build && firebase emulators:start --import=../emulator-data --export-on-exit=../emulator-data",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "db:start": "docker compose -f ../docker-compose.yml up -d",
+    "db:stop": "docker compose -f ../docker-compose.yml down",
+    "migrate": "node -r dotenv/config ./node_modules/.bin/node-pg-migrate up",
+    "migrate:down": "node -r dotenv/config ./node_modules/.bin/node-pg-migrate down",
+    "migrate:create": "node -r dotenv/config ./node_modules/.bin/node-pg-migrate create"
   },
   "engines": {
     "node": "22"
@@ -22,7 +20,9 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "firebase-admin": "^12.1.0",
-    "firebase-functions": "^6.3.2"
+    "firebase-functions": "^6.3.2",
+    "node-pg-migrate": "^8.0.4",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
@@ -33,6 +33,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.1.0",
+    "@types/pg": "^8.20.0",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5"
   },
